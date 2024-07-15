@@ -19,7 +19,7 @@ You can get good overtime with enough practice, so do not give up easily.
 >[!Note]
 > I don't have access to apple devices, therefore all animations have been created with an Android device, consider opening a pull request if you feel like something is off.
 
-Each animation is an stand alone Expo Managed application or a custom development client in case of needing native libraries.
+Each animation is a stand alone Expo managed application or a custom development client in case of requiring native libraries.
 
 All animations contain a short description, notes and video footage.
 
