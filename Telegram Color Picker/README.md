@@ -1,12 +1,10 @@
 ## Telegram Color Picker
 
 ### About
-A replica of Telegram's color pickers found under the image editor section of the app.
-
-It's not meant to be a one to one representation, but close enough to copy its more remarkable features.
+A replica of Telegram's color pickers found under the image editor section of the app, it's not meant to be a one to one representation, but close enough to copy its more remarkable features.
 
 ### Footage
-https://github.com/user-attachments/assets/e651593e-6147-437f-9fd2-b934bbe1cc25
+https://github.com/user-attachments/assets/29504733-c405-4b26-8837-e4306f81fc47
 
 ### Important Notes
 - Skia images have a method called `readPixels` that can be used to get the color of a pixel at a given xy coordiantes.
