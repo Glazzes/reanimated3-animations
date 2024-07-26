@@ -28,3 +28,8 @@ All animations contain a short description, notes and video footage.
 - [PNG Image Based Skeletons]() - waiting to be uploaded
 - [Telegram Color Picker](./Telegram%20Color%20Picker/)
 - [Telegram QR Code Generator](./Telegram%20QR%20Code%20Generator/)
+
+## Miscellaneous
+These ones are not animations, however its contents can complement the creation of some animations or in general visual stuff I find interesting.
+
+- [Image Color Pallete Extraction](./Miscellaneous/Image%20Color%20Pallete%20Extraction/)
