@@ -141,7 +141,7 @@ const BottomSheet = (_: unknown, ref?: React.ForwardedRef<BottomSheetType>) => {
     return {
       width,
       height,
-      zIndex: Number.MAX_SAFE_INTEGER,
+      zIndex: 999_999_999,
       transform: [{ translateY: rootTranslate.value }],
     };
   }, [rootTranslate]);

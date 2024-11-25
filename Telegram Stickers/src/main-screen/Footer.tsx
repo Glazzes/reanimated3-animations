@@ -93,6 +93,7 @@ const Footer: React.FC<FooterProps> = ({ image, screenDimensions }) => {
 
 const styles = StyleSheet.create({
   container: {
+    width: "100%",
     height: statusBarHeight * 2,
     flexDirection: "row",
     justifyContent: "space-between",

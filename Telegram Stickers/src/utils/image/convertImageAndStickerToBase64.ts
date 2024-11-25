@@ -26,7 +26,7 @@ export const convertImageAndStickersToBase64 = (options: Options) => {
 
   if (canvas === undefined) return undefined;
 
-  // Draw image image
+  // Draw background image
   canvas.drawImageRectOptions(
     image,
     rect(0, 0, image.width(), image.height()),
@@ -47,13 +47,21 @@ export const convertImageAndStickersToBase64 = (options: Options) => {
     const translateX = sticker.transform.translate.x * relativeScale;
     const translateY = sticker.transform.translate.y * relativeScale;
     const angle = sticker.transform.rotate * RAG2DEG;
+    const isFlipped = sticker.transform.rotateY === Math.PI;
 
     const size = sticker.radius * 2 * relativeScale;
-    const x = centerX - size / 2 + translateX;
-    const y = centerY - size / 2 + translateY;
+    const x = centerX - size / 2;
+    const y = centerY - size / 2;
 
     canvas.save();
-    canvas.rotate(angle, centerX + translateX, centerY + translateY);
+    if (isFlipped) {
+      canvas.scale(-1, 1);
+      canvas.translate(-1 * image.width(), 0);
+    }
+
+    const direction = isFlipped ? -1 : 1;
+    canvas.translate(direction * translateX, translateY);
+    canvas.rotate(direction * angle, centerX, centerY);
 
     if (sticker.skiaSource !== null) {
       const stickerImage = sticker.skiaSource;
