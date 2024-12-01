@@ -1,11 +1,5 @@
 import React, { useContext } from "react";
-import {
-  Image,
-  StyleSheet,
-  View,
-  ViewStyle,
-  useWindowDimensions,
-} from "react-native";
+import { Image, StyleSheet, View, ViewStyle } from "react-native";
 
 import Sticker from "@components/Sticker";
 import { StickerContext } from "@providers/index";
@@ -39,7 +33,7 @@ const EditableImage: React.FC<EditableImageProps> = ({
         />
 
         {stickers.map((sticker, index) => {
-          return <Sticker key={sticker.id} index={index} sticker={sticker} />;
+          return <Sticker key={sticker.id} sticker={sticker} />;
         })}
       </View>
     </View>

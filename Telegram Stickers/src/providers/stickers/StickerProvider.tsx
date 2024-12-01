@@ -24,9 +24,9 @@ const StickerProvider = ({ children }: StickerProviderProps) => {
 
   const [stickers, setStickers] = useState<StickerType[]>([]);
 
-  const activeStickerIndex = useSharedValue<number>(0);
-  const stickerHistory = useSharedValue<number[]>([]); // order in which the stickers are pressed
-  const stickerStateContext = useSharedValue<Record<number, StickerState>>({});
+  const activeStickerId = useSharedValue<string | undefined>(undefined);
+  const stickerHistory = useSharedValue<string[]>([]);
+  const stickerStateContext = useSharedValue<Record<string, StickerState>>({});
   const blockStickerGestures = useSharedValue<boolean>(false);
 
   const openStickerMenu = (center: Vector<number>) => {
@@ -37,12 +37,20 @@ const StickerProvider = ({ children }: StickerProviderProps) => {
   const flip = () => {
     menuRef.current?.exit(() => {
       blockStickerGestures.value = false;
-      emitFlipEvent(activeStickerIndex.value);
+
+      const currentId = activeStickerId.get();
+      if (currentId !== undefined) {
+        emitFlipEvent(currentId);
+      }
     });
   };
 
   const duplicate = () => {
-    const actualSticker = stickerStateContext.value[activeStickerIndex.value];
+    const currentId = activeStickerId.value;
+    if (currentId === undefined) return;
+
+    const actualSticker = stickerStateContext.value[currentId];
+    if (actualSticker === undefined) return;
 
     const id = randomUUID();
     const newSticker: StickerType = {
@@ -65,8 +73,13 @@ const StickerProvider = ({ children }: StickerProviderProps) => {
         "worklet";
 
         blockStickerGestures.value = false;
-        stickerHistory.value = [...stickerHistory.value, stickers.length];
-        activeStickerIndex.value = stickers.length;
+
+        activeStickerId.value = id;
+        stickerHistory.modify((current) => {
+          "worklet";
+          current.push(id);
+          return current;
+        });
       })();
 
       setStickers((prev) => [...prev, newSticker]);
@@ -75,49 +88,48 @@ const StickerProvider = ({ children }: StickerProviderProps) => {
 
   const deleteSticker = () => {
     menuRef.current?.exit(() => {
-      const deletedIndex = activeStickerIndex.value;
-      setStickers((prev) => prev.filter((_, index) => index !== deletedIndex));
+      const activeId = activeStickerId.value;
+      if (activeId === undefined) return;
+
+      setStickers((prev) => prev.filter((sticker) => sticker.id !== activeId));
 
       runOnUI(() => {
         "worklet";
 
-        const newHistory: number[] = [];
-        const newState: Record<number, StickerState> = {};
-        for (let i = 0; i < stickerHistory.value.length - 1; i++) {
-          const currentIndex = stickerHistory.value[i];
-          const newIndex = currentIndex - (currentIndex > deletedIndex ? 1 : 0);
-
-          newHistory[i] = newIndex;
-          newState[newIndex] = stickerStateContext.value[currentIndex];
-        }
-
+        const historyLength = stickerHistory.value.length;
         blockStickerGestures.value = false;
-        stickerHistory.value = newHistory;
-        stickerStateContext.value = newState;
-        activeStickerIndex.value = newHistory[newHistory.length - 1];
+        activeStickerId.value = stickerHistory.value[historyLength - 2];
+
+        // @ts-ignore
+        stickerHistory.modify((current) => {
+          "worklet";
+          return current.filter((id) => id !== activeId);
+        });
+
+        stickerStateContext.modify((current) => {
+          "worklet";
+          delete current[activeId];
+          return current;
+        });
       })();
     });
   };
 
   useAnimatedReaction(
-    () => activeStickerIndex.value,
+    () => activeStickerId.value,
     (value) => {
-      const newHistory: number[] = [];
-      const activeStickerHistoryIndex = stickerHistory.value.indexOf(value);
+      if (value === undefined) return;
 
-      for (let i = 0; i < stickerHistory.value.length; i++) {
-        if (i === activeStickerHistoryIndex) {
-          newHistory[stickerHistory.value.length - 1] = value;
-          continue;
-        }
+      // @ts-ignore
+      stickerHistory.modify((prev) => {
+        "worklet";
 
-        const index = i < activeStickerHistoryIndex ? i : i - 1;
-        newHistory[index] = stickerHistory.value[i];
-      }
-
-      stickerHistory.value = newHistory;
+        const newHistory = prev.filter((id: string) => id !== value);
+        newHistory.push(value);
+        return newHistory;
+      });
     },
-    [activeStickerIndex],
+    [activeStickerId],
   );
 
   return (
@@ -125,7 +137,7 @@ const StickerProvider = ({ children }: StickerProviderProps) => {
       value={{
         stickers,
         setStickers,
-        activeStickerIndex,
+        activeStickerId,
         stickerHistory,
         stickerStateContext,
         blockStickerGestures,

@@ -47,7 +47,7 @@ const BottomSheet = (_: unknown, ref?: React.ForwardedRef<BottomSheetType>) => {
   const listRef = useAnimatedRef();
   const { width, height } = useWindowDimensions();
 
-  const { setStickers, stickerHistory, activeStickerIndex } =
+  const { setStickers, stickerHistory, activeStickerId } =
     useContext(StickerContext);
 
   const rootTranslate = useSharedValue<number>(height);
@@ -71,9 +71,10 @@ const BottomSheet = (_: unknown, ref?: React.ForwardedRef<BottomSheetType>) => {
 
   // This function will not change due to their dependencies
   const addSticker = (source: number) => {
+    const newId = randomUUID();
+
     const setNewSticker = () => {
       setStickers((prev) => {
-        const newId = randomUUID();
         return [...prev, { id: newId, source }];
       });
     };
@@ -82,9 +83,12 @@ const BottomSheet = (_: unknown, ref?: React.ForwardedRef<BottomSheetType>) => {
       "worklet";
       close();
 
-      const numberOfStickers = stickerHistory.value.length;
-      stickerHistory.value = [...stickerHistory.value, numberOfStickers];
-      activeStickerIndex.value = numberOfStickers;
+      activeStickerId.value = newId;
+      stickerHistory.modify((current) => {
+        "worklet";
+        current.push(newId);
+        return current;
+      });
 
       runOnJS(setNewSticker)();
     })();

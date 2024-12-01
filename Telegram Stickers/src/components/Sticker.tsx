@@ -30,7 +30,6 @@ import { StickerState, StickerType } from "../types";
 type PanGestureEvent = GestureUpdateEvent<PanGestureHandlerEventPayload>;
 
 type StickerProps = {
-  index: number;
   sticker: StickerType;
 };
 
@@ -39,9 +38,9 @@ const HITSLOP = (44 - INDICATOR_SIZE) / 2;
 
 const BORDER_RADIUS = INITIAL_STICKER_SIZE / 2;
 
-const Sticker: React.FC<StickerProps> = ({ index, sticker }) => {
+const Sticker: React.FC<StickerProps> = ({ sticker }) => {
   const {
-    activeStickerIndex,
+    activeStickerId,
     stickerHistory,
     stickerStateContext,
     blockStickerGestures,
@@ -59,7 +58,7 @@ const Sticker: React.FC<StickerProps> = ({ index, sticker }) => {
   const scale = useSharedValue<number>(1);
   const center = useVector(0, 0); // center of the sticker on the screen, absolute position
 
-  const zIndex = useSharedValue<number>(index);
+  const zIndex = useSharedValue<number>(999_999_999);
   const ringScale = useSharedValue<number>(1);
   const ringOpacity = useSharedValue<number>(1);
 
@@ -90,7 +89,7 @@ const Sticker: React.FC<StickerProps> = ({ index, sticker }) => {
     .onStart(() => {
       if (blockStickerGestures.value) return;
 
-      activeStickerIndex.value = index;
+      activeStickerId.value = sticker.id;
       offset.x.value = translate.x.value;
       offset.y.value = translate.y.value;
     })
@@ -107,12 +106,12 @@ const Sticker: React.FC<StickerProps> = ({ index, sticker }) => {
     .onEnd(() => {
       if (blockStickerGestures.value) return;
 
-      if (activeStickerIndex.value === index) {
+      if (activeStickerId.value === sticker.id) {
         runOnJS(openStickerMenu)({ x: center.x.value, y: center.y.value });
         return;
       }
 
-      activeStickerIndex.value = index;
+      activeStickerId.value = sticker.id;
       displayBorder(1, 1, true);
 
       scale.value = withRepeat(
@@ -128,7 +127,7 @@ const Sticker: React.FC<StickerProps> = ({ index, sticker }) => {
   const onPanUpdate = (e: PanGestureEvent, direction: "right" | "left") => {
     "worklet";
 
-    if (index !== activeStickerIndex.value || blockStickerGestures.value)
+    if (sticker.id !== activeStickerId.value || blockStickerGestures.value)
       return;
 
     const normalizedX = e.absoluteX - center.x.value;
@@ -211,7 +210,7 @@ const Sticker: React.FC<StickerProps> = ({ index, sticker }) => {
   }, [rotate, radius]);
 
   useDerivedValue(() => {
-    if (index !== activeStickerIndex.value) return;
+    if (sticker.id !== activeStickerId.value) return;
 
     const state: StickerState = {
       index: 0,
@@ -225,33 +224,37 @@ const Sticker: React.FC<StickerProps> = ({ index, sticker }) => {
       },
     };
 
-    stickerStateContext.value = {
-      ...stickerStateContext.value,
-      [index]: state,
-    };
+    stickerStateContext.modify((current) => {
+      "worklet";
+      // @ts-ignore
+      current[sticker.id] = state;
+      return current;
+    });
   });
 
   useAnimatedReaction(
-    () => activeStickerIndex.value,
-    (currentIndex) => {
-      const isActive = currentIndex === index;
+    () => activeStickerId.value,
+    (activeId) => {
+      if (activeId !== undefined) {
+        zIndex.value = stickerHistory.value.indexOf(sticker.id);
+      }
 
-      zIndex.value = stickerHistory.value.indexOf(index);
+      const isActive = activeId === sticker.id;
       displayBorder(isActive ? 1 : 0, isActive ? 1 : 0, isActive);
     },
-    [activeStickerIndex, stickerHistory, index],
+    [activeStickerId, stickerHistory],
   );
 
   useEffect(() => {
-    const sub = listenToFlipEvent((idx) => {
-      if (index !== idx) return;
+    const sub = listenToFlipEvent((flipId) => {
+      if (sticker.id !== flipId) return;
 
       const toAngle = rotateY.value === Math.PI ? 0 : Math.PI;
       rotateY.value = withTiming(toAngle);
     });
 
     return () => sub.remove();
-  }, [index, rotateY]);
+  }, [sticker.id, rotateY]);
 
   return (
     <GestureDetector gesture={Gesture.Race(pan, tap)}>
@@ -319,6 +322,5 @@ const styles = StyleSheet.create({
 
 export default React.memo(
   Sticker,
-  (prev, next) =>
-    prev.index === next.index && prev.sticker.source === next.sticker.source,
+  (prev, next) => prev.sticker.id === next.sticker.id,
 );
