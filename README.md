@@ -30,6 +30,7 @@ All animations contain a short description, notes and video footage.
 - [Drawing App Color Picker](./Drawing%20App%20Color%20Picker/)
 - [Lumina Sync](./Lumina%20Sync/)
 - [Obys Gooey Mask](./Obys%20Gooey%20Mask/)
+- [Spotify Lyrics](./Spotify%20Lyrics)
 - [Telegram Color Picker](./Telegram%20Color%20Picker/)
 - [Telegram QR Code Generator](./Telegram%20QR%20Code%20Generator/)
 - [Telegram Stickers](./Telegram%20Stickers)
